@@ -52,8 +52,9 @@ async fn handle_get(
     client: Arc<Client>,
 ) -> Result<impl warp::Reply, Rejection> {
     //println!("Handling GET request for hash: {}", hash);
+    let augmented_hash = "df".to_owned() + &hash; //so clients can't write to ratelimiter... is this brittle?
     let mut conn = client.get_async_connection().await.unwrap();
-    let result: Option<String> = conn.get(&hash).await.unwrap();
+    let result: Option<String> = conn.get(&augmented_hash).await.unwrap();
 
     if let Some(value) = result {
         Ok(warp::reply::json(&value))
@@ -70,9 +71,9 @@ async fn handle_post(
     println!("Handling POST request for data: {:?}", data);
     let mut conn = client.get_async_connection().await.unwrap();
     let hash = hash_data(&data);
-
-    let _: () = conn.set(&hash, serde_json::to_string(&data).unwrap()).await.unwrap();
-    let hash_response = json!({ "hash": hash });
+    let augmented_hash = "df".to_owned() + &hash;
+    let _: () = conn.set(&augmented_hash, serde_json::to_string(&data).unwrap()).await.unwrap();
+    let hash_response = json!({ "hash": augmented_hash });
     Ok(warp::reply::json(&hash_response))
 }
 
